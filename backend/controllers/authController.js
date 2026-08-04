@@ -1,7 +1,13 @@
 const user = require("../model/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const sendEmail = require("../utils/mail");
+const sendEmail = require("../utils/sendMail");
+
+const generateToken = (user) => {
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: "30d", // Token expires in 30 days
+  });
+}
 
 // Register a new user
 const registerUser = async (req, res) => {
@@ -40,9 +46,92 @@ const registerUser = async (req, res) => {
         });
     }
     
-    res.status(201).json({ message: "User registered successfully, please check your email for verification." });
+    res.status(201).json({
+      _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      token: generateToken(newUser),
+      message: "User registered successfully. Please check your email for the OTP to verify your account."
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Server error" });
   }
-}; 
+};
+
+// Verify OTP
+// const verifyOtp = async (req, res) => {
+//   const { email, otp } = req.body;
+
+//   try {
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     if (user.otp !== otp) {
+//       return res.status(400).json({ message: "Invalid OTP" });
+//     }
+
+//     if (Date.now() > user.otpExpiry) {
+//       return res.status(400).json({ message: "OTP has expired" });
+//     }
+
+//     user.isVerified = true;
+//     user.otp = undefined;
+//     user.otpExpiry = undefined;
+//     await user.save();
+
+//     res.status(200).json({
+//       _id: user._id,
+//       name: user.name,
+//       email: user.email,
+//       token: generateToken(user),
+//       message: "OTP verified successfully"
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Check if user exists
+    const existingUser = await user.findOne({ email });
+    if (!existingUser) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Check if password is correct
+    const isMatch = await bcrypt.compare(password, existingUser.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    res.status(200).json({
+      _id: existingUser._id,
+      name: existingUser.name,
+      email: existingUser.email,
+      token: generateToken(existingUser),
+      message: "Login successful"
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getUsers = async (req, res) => {
+  try {
+    const users = await user.find().select("-password"); // Exclude password field from the response
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = {
+  registerUser,
+  // verifyOtp,
+  loginUser,
+  getUsers
+};
