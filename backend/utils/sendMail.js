@@ -1,24 +1,31 @@
+// 1. Load environment variables first
+require('dotenv').config(); 
 const nodemailer = require('nodemailer');
 
-const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
+// 2. Create the transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER, // Reads from .env
+    pass: process.env.EMAIL_PASS  // Reads the App Password from .env
+  }
+});
 
-  const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: options.to,
-    subject: options.subject,
-    text: options.text
-  };
+// 3. Define your send function
+const sendMail = async (to, subject, text) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"Your App Name" <${process.env.EMAIL_USER}>`,
+      to: to,
+      subject: subject,
+      text: text
+    });
+    console.log('Email sent: ' + info.response);
+    return info;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
+};
 
-  await transporter.sendMail(mailOptions);
-}; 
-
-module.exports = sendEmail;
+module.exports = sendMail;   

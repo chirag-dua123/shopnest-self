@@ -1,7 +1,33 @@
 const User = require("../model/user");
 const bcrypt = require("bcryptjs");
 const sendEmail = require("../utils/sendMail");
-const { generateAccessToken, generateRefreshToken } = require("../utils/tokenUtils");
+const { generateAccessToken, generateRefreshToken, hashToken } = require("../utils/tokenUtils");
+
+const isProduction = process.env.NODE_ENV === "production";
+const accessCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: "lax",
+  maxAge: 15 * 60 * 1000,
+};
+
+const refreshCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+const clearAuthCookies = (res) => {
+  res.clearCookie("accessToken", { httpOnly: true, secure: isProduction, sameSite: "lax" });
+  res.clearCookie("refreshToken", { httpOnly: true, secure: isProduction, sameSite: "lax" });
+};
+
+const setAuthCookies = (res, accessToken, refreshToken) => {
+  res.cookie("accessToken", accessToken, accessCookieOptions);
+  res.cookie("refreshToken", refreshToken, refreshCookieOptions);
+};
+
 
 // Register a new user
 const registerUser = async (req, res) => {
@@ -33,11 +59,11 @@ const registerUser = async (req, res) => {
     // Save user to database
     await newUser.save();
     
-    await sendEmail({
-      to: email,
-      subject: "Email Verification OTP",
-      text: `Your OTP for registration is: ${otp}. \n This OTP will expire in 10 minutes.`
-    });
+    await sendEmail(
+      email,
+      "Email Verification OTP",
+      `Your OTP for registration is: ${otp}. \n This OTP will expire in 10 minutes.`
+    );
     
     res.status(201).json({
       message: "User registered successfully. Please check your email for the OTP to verify your account."
@@ -49,7 +75,12 @@ const registerUser = async (req, res) => {
 
 // Verify OTP
 const verifyOtp = async (req, res) => {
-  const { email, otp } = req.body;
+  const { email, otp } = req.body || {};
+  const normalizedOtp = String(otp).trim();
+
+  if (!email || !otp) {
+    return res.status(400).json({ message: "Email and OTP are required" });
+  }
 
   try {
     const user = await User.findOne({ email });
@@ -61,7 +92,7 @@ const verifyOtp = async (req, res) => {
       return res.status(400).json({ message: "User is already verified" });
     }
 
-    if (user.otp !== otp) {
+    if (String(user.otp).trim() !== normalizedOtp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
@@ -76,16 +107,17 @@ const verifyOtp = async (req, res) => {
     const accessToken = generateAccessToken(user._id, user.role);
     const refreshToken = generateRefreshToken(user._id);
     
-    user.REFRESH_TOKEN = refreshToken;
+    user.accessTokenHash = hashToken(accessToken);
+    user.refreshTokenHash = hashToken(refreshToken);
     
     await user.save();
+
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.status(200).json({
       _id: user._id,
       name: user.name,
       email: user.email,
-      accessToken,
-      refreshToken,
       message: "OTP verified successfully"
     });
   } catch (error) {
@@ -115,15 +147,16 @@ const loginUser = async (req, res) => {
     const accessToken = generateAccessToken(user._id, user.role);
     const refreshToken = generateRefreshToken(user._id);
 
-    user.REFRESH_TOKEN = refreshToken;
+    user.accessTokenHash = hashToken(accessToken);
+    user.refreshTokenHash = hashToken(refreshToken);
     await user.save();
+
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.status(200).json({
       _id: user._id,
       name: user.name,
       email: user.email,
-      accessToken,
-      refreshToken,
       message: "Login successful"
     });
   } catch (error) {
@@ -132,18 +165,21 @@ const loginUser = async (req, res) => {
 };
 
 const logoutUser = async (req, res) => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
   try {
     if (!refreshToken) {
       return res.status(400).json({ message: "Refresh token is required" });
     }
-    const user = await User.findOne({ REFRESH_TOKEN: refreshToken });
+    const user = await User.findOne({ refreshTokenHash: hashToken(refreshToken) });
     if (!user) {
       return res.status(404).json({ message: "User not found or already logged out" });
     }
     
-    user.REFRESH_TOKEN = null;
+    user.accessTokenHash = null;
+    user.refreshTokenHash = null;
     await user.save();
+
+    clearAuthCookies(res);
     
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
@@ -166,11 +202,11 @@ const forgotPassword = async (req, res) => {
     user.otpExpiresAt = otpExpiresAt;
     await user.save();
 
-    await sendEmail({
-      to: email,
-      subject: "Password Reset OTP",
-      text: `Your OTP to reset password is: ${otp}. \nThis OTP will expire in 10 minutes.`
-    });
+    await sendEmail(
+      email,
+      "Password Reset OTP",
+      `Your OTP to reset password is: ${otp}. \nThis OTP will expire in 10 minutes.`
+    );
 
     res.status(200).json({ message: "Password reset OTP sent to your email" });
   } catch (error) {
@@ -180,13 +216,14 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
+  const normalizedOtp = String(otp).trim();
   try {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.otp !== otp) {
+    if (String(user.otp).trim() !== normalizedOtp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 

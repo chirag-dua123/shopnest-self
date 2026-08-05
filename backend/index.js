@@ -1,6 +1,7 @@
 const dotenv = require('dotenv');
 dotenv.config();
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const app = express();
 const connectDB = require('./config/db');
 connectDB();
@@ -13,6 +14,7 @@ app.get('/', (req, res) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Added urlencoded just in case
+app.use(cookieParser());
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/token', require('./routes/tokenRoutes'));

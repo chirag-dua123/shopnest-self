@@ -26,7 +26,8 @@ const userSchema = new mongoose.Schema(
     },
     otp: { type: String, default: null },
     otpExpiresAt: { type: Date, default: null },
-    REFRESH_TOKEN: { type: String, default: null },
+    accessTokenHash: { type: String, default: null },
+    refreshTokenHash: { type: String, default: null },
   },
   { timestamps: true }
 );
