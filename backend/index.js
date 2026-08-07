@@ -26,7 +26,7 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
 }));
-app.use(mongoSanitize());
+// Removed express-mongo-sanitize due to getter issue in newer Express versions
 
 // Rate Limiting for Auth
 const authLimiter = rateLimit({

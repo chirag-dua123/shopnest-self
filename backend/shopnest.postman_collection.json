@@ -1,209 +1,79 @@
 {
   "info": {
-    "_postman_id": "ffce88ab-8895-4a80-be7f-721a959af7f3",
-    "name": "shopnest",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "57075063",
-    "_collection_link": "https://go.postman.co/collection/57075063-ffce88ab-8895-4a80-be7f-721a959af7f3?source=collection_link"
+    "name": "ShopNest API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Health",
-      "request": {
-        "method": "GET",
-        "header": []
-      },
-      "response": []
-    },
-    {
-      "name": "Register User",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"name\":\"karan\",\r\n    \"email\": \"karannotaujla@gmail.com\",\r\n    \"password\": \"VeryStrongPassword123@\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": { "method": "POST", "url": "{{endpoint}}/api/auth/register", "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}", "options": { "raw": { "language": "json" } } } }
         },
-        "url": {
-          "raw": "{{endpoint}}/api/auth/register",
-          "host": [
-            "{{endpoint}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "register"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "verify-otp",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"email\": \"karannotaujla@gmail.com\",\r\n    \"otp\": \"167405\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+        {
+          "name": "Login (Admin)",
+          "request": { "method": "POST", "url": "{{endpoint}}/api/auth/login", "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin@123\"\n}", "options": { "raw": { "language": "json" } } } }
         },
-        "url": {
-          "raw": "{{endpoint}}/api/auth/verify-otp",
-          "host": [
-            "{{endpoint}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "verify-otp"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "logout",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"email\": \"karannotaujla@gmail.com\",\r\n    \"otp\": \"167405\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+        {
+          "name": "Login (Test User)",
+          "request": { "method": "POST", "url": "{{endpoint}}/api/auth/login", "body": { "mode": "raw", "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"User@123\"\n}", "options": { "raw": { "language": "json" } } } }
         },
-        "url": {
-          "raw": "{{endpoint}}/api/auth/verify-otp",
-          "host": [
-            "{{endpoint}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "verify-otp"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "refresh",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"name\":\"karan\",\r\n    \"email\": \"karannotaujla@gmail.com\",\r\n    \"password\": \"VeryStrongPassword123@\"\r\n}"
+        {
+          "name": "Verify OTP (Test User)",
+          "request": { "method": "POST", "url": "{{endpoint}}/api/auth/verify-otp", "body": { "mode": "raw", "raw": "{\n  \"email\": \"test@example.com\",\n  \"otp\": \"123456\"\n}", "options": { "raw": { "language": "json" } } } }
         },
-        "url": {
-          "raw": "{{endpoint}}/api/token",
-          "host": [
-            "{{endpoint}}"
-          ],
-          "path": [
-            "api",
-            "token"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "forgot-password",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"email\": \"karannotaujla@gmail.com\"\r\n}"
+        {
+          "name": "Forgot Password",
+          "request": { "method": "POST", "url": "{{endpoint}}/api/auth/forgot-password", "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@example.com\"\n}", "options": { "raw": { "language": "json" } } } }
         },
-        "url": {
-          "raw": "{{endpoint}}/api/forgot-password",
-          "host": [
-            "{{endpoint}}"
-          ],
-          "path": [
-            "api",
-            "forgot-password"
-          ]
+        {
+          "name": "Logout",
+          "request": { "method": "POST", "url": "{{endpoint}}/api/auth/logout" }
         }
-      },
-      "response": []
+      ]
     },
     {
-      "name": "forgot-password Copy",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"email\": \"karannotaujla@gmail.com\"\r\n}"
-        },
-        "url": {
-          "raw": "{{endpoint}}/api/forgot-password",
-          "host": [
-            "{{endpoint}}"
-          ],
-          "path": [
-            "api",
-            "forgot-password"
-          ]
-        }
-      },
-      "response": []
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
+      "name": "Products",
+      "item": [
+        { "name": "Get All Products (Pagination & Filter)", "request": { "method": "GET", "url": "{{endpoint}}/api/products?page=1&limit=10&sort=newest" } },
+        { "name": "Get Product By ID", "request": { "method": "GET", "url": "{{endpoint}}/api/products/PRODUCT_ID_HERE" } },
+        { "name": "Create Product (Admin)", "request": { "method": "POST", "url": "{{endpoint}}/api/products", "body": { "mode": "raw", "raw": "{\n  \"name\": \"New Item\",\n  \"description\": \"Item desc\",\n  \"price\": 100,\n  \"image\": \"https://res.cloudinary.com/demo/image/upload/sample.jpg\",\n  \"category\": \"Tech\",\n  \"countInStock\": 10\n}", "options": { "raw": { "language": "json" } } } } }
+      ]
     },
     {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
+      "name": "Cart",
+      "item": [
+        { "name": "Get My Cart", "request": { "method": "GET", "url": "{{endpoint}}/api/cart" } },
+        { "name": "Add Item to Cart", "request": { "method": "POST", "url": "{{endpoint}}/api/cart", "body": { "mode": "raw", "raw": "{\n  \"productId\": \"PRODUCT_ID_HERE\",\n  \"quantity\": 1\n}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Remove from Cart", "request": { "method": "DELETE", "url": "{{endpoint}}/api/cart/PRODUCT_ID_HERE" } }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        { "name": "Create Order", "request": { "method": "POST", "url": "{{endpoint}}/api/orders", "body": { "mode": "raw", "raw": "{\n  \"orderItems\": [{ \"product\": \"PRODUCT_ID_HERE\", \"quantity\": 1 }],\n  \"shippingAddress\": { \"address\": \"123 Main St\", \"city\": \"New York\", \"postalCode\": \"10001\", \"country\": \"USA\" },\n  \"paymentMethod\": \"Razorpay\"\n}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Get My Orders", "request": { "method": "GET", "url": "{{endpoint}}/api/orders/myorders" } },
+        { "name": "Get Order By ID", "request": { "method": "GET", "url": "{{endpoint}}/api/orders/ORDER_ID_HERE" } },
+        { "name": "Get All Orders (Admin)", "request": { "method": "GET", "url": "{{endpoint}}/api/orders" } },
+        { "name": "Update Order Status (Admin)", "request": { "method": "PUT", "url": "{{endpoint}}/api/orders/ORDER_ID_HERE", "body": { "mode": "raw", "raw": "{\n  \"status\": \"Shipped\"\n}", "options": { "raw": { "language": "json" } } } } }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        { "name": "Create Razorpay Order", "request": { "method": "POST", "url": "{{endpoint}}/api/payment/razorpay-order", "body": { "mode": "raw", "raw": "{\n  \"orderId\": \"ORDER_ID_HERE\"\n}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Verify Payment Signature", "request": { "method": "POST", "url": "{{endpoint}}/api/payment/verify", "body": { "mode": "raw", "raw": "{\n  \"razorpay_order_id\": \"order_id\",\n  \"razorpay_payment_id\": \"pay_id\",\n  \"razorpay_signature\": \"sig\",\n  \"orderId\": \"DB_ORDER_ID\"\n}", "options": { "raw": { "language": "json" } } } } }
+      ]
+    },
+    {
+      "name": "Uploads",
+      "item": [
+        { "name": "Upload Image (Admin)", "request": { "method": "POST", "url": "{{endpoint}}/api/upload", "body": { "mode": "formdata", "formdata": [ { "key": "image", "type": "file", "src": "" } ] } } }
+      ]
     }
   ],
   "variable": [
-    {
-      "key": "endpoint",
-      "value": ""
-    }
+    { "key": "endpoint", "value": "http://localhost:5000" }
   ]
 }
