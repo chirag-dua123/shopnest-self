@@ -72,14 +72,13 @@ The authentication system implemented in the backend relies on double token vali
 - [x] **Security Vulnerability in Order Creation**: Secured the `/create-order` endpoint in [orderRoutes.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/routes/orderRoutes.js) with the `protect` middleware, and changed [orderController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/orderController.js) to retrieve the `userId` directly from `req.user._id` (and user's email via `req.user.email` for nodemailer confirmation) rather than trusting client-provided input.
 - [x] **Case-Sensitive Mongoose References**: Updated references from lowercased to capitalized `'User'` and `'Product'` in [orders.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/model/orders.js) to align with correct case-sensitive model registry naming conventions.
 - [x] **Error Handling for validation and casting**: Upgraded error handling in [orderController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/orderController.js) to intercept Mongoose validation and cast errors, returning `400 Bad Request` with appropriate messages instead of throwing generic `500` server errors.
-
+- [x] **User Controller Implementation**: Fully implemented [userController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/userController.js) including secure profile fetching and profile updating (handles password hashing and email uniqueness validation).
+- [x] **Admin Middleware Logical Bug**: Corrected [adminMiddleware.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/middleware/adminMiddleware.js) to check `req.user.role === 'admin'` instead of `req.user.isAdmin` (since there was no `isAdmin` property on the user model).
+- [x] **Product Model & Controller**: Created the Mongoose schema [product.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/model/product.js) and implemented full CRUD logic inside [productController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/productController.js) (secured using auth and admin middlewares).
+- [x] **Cart Model & Controller**: Created the Mongoose schema [cart.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/model/cart.js) and implemented full cart management endpoints in [cartController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/cartController.js) (including inventory limits validation and product details population).
 
 ### Active Issues / Bugs
-#### 1. Admin Middleware Logical Bug
-- **File**: [adminMiddleware.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/middleware/adminMiddleware.js)
-- **Problem**: The middleware checks `if (req.user && req.user.isAdmin)` (L2). However, the [user.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/model/user.js) model schema does not have an `isAdmin` property. Instead, it defines roles using `role: { type: String, enum: ["user", "admin"] }`.
-- **Impact**: The admin check will always evaluate to falsy, and valid admin users will be blocked with "Access denied, admin only".
-- **Fix**: Update the condition to `if (req.user && req.user.role === 'admin')`.
+*No critical bugs active in the current backend scaffolding. The server is runnable and fully functional.*
 
 ---
 
@@ -87,12 +86,9 @@ The authentication system implemented in the backend relies on double token vali
 
 When you are ready to continue building:
 
-1. **Stabilize the Backend**:
-   - Fix the role-based auth condition in [adminMiddleware.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/middleware/adminMiddleware.js).
+1. **Implement Missing Core Models**:
+   - All backend core models (User, Product, Cart, Order) are now fully implemented and connected.
 
-2. **Implement Missing Core Models**:
-   - Create a `Product` model (referred to by the Order schema).
-   - Create a `Cart` model (or store cart data in local storage or Redis, depending on requirements).
 
 3. **Scaffold the Frontend**:
    - Initialize a React + Tailwind application inside `/frontend` using Vite:
