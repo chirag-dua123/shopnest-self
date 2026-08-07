@@ -19,6 +19,11 @@ app.use(cookieParser());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/token', require('./routes/tokenRoutes'));
 
+app.use('/api/create-order', require('./routes/orderRoutes'));
+app.use('/api/user', require('./routes/userRoutes'));
+app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/cart', require('./routes/cartRoutes'));
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
