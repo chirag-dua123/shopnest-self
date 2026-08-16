@@ -26,7 +26,7 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
 }));
-app.use(mongoSanitize());
+// Removed express-mongo-sanitize due to getter issue in newer Express versions
 
 // Rate Limiting for Auth
 const authLimiter = rateLimit({
@@ -46,6 +46,7 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
