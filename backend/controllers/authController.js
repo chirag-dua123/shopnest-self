@@ -118,6 +118,7 @@ const verifyOtp = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       message: "OTP verified successfully"
     });
   } catch (error) {
@@ -157,6 +158,7 @@ const loginUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       message: "Login successful"
     });
   } catch (error) {
