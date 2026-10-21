@@ -1,43 +1,40 @@
 # ShopNest Project Guide & Developer Hand-off
 
-Welcome! This document is designed for developers (or Gemini AI coding agents) resuming work on the **ShopNest** full-stack e-commerce project. It contains details about the project structure, configuration, security flows, identified bugs/discrepancies, and immediate action items.
+Welcome! This document provides an updated reference for developers and agents working on the **ShopNest** full-stack e-commerce project.
 
 ---
 
 ## 📂 Project Overview & Structure
 
-ShopNest is structured as a monorepo containing a Node.js/Express backend, with an empty placeholder for the React frontend.
+ShopNest is structured as a full-stack monorepo containing a Node.js/Express backend and a modern React + Vite + Redux Toolkit + Tailwind CSS frontend.
 
 ### Directory Structure
 
 ```text
 shopnest-self/
-├── README.md             <- High-level description of ShopNest features & tech stack
+├── README.md             <- High-level description of features, tech stack & setup
 ├── gemini.md             <- This developer guide
-├── frontend/             <- [EMPTY] Intended for React, Redux Toolkit, Tailwind app
+├── frontend/             <- React 18, Vite, Redux Toolkit, Tailwind CSS frontend
+│   ├── src/
+│   │   ├── api/          <- Axios client configured with withCredentials & Vite proxy
+│   │   ├── app/          <- Redux Store config
+│   │   ├── components/   <- UI components (Header, Footer, Rating, ProductCard, Filters, etc.)
+│   │   ├── features/     <- Redux slices (authSlice, productSlice, cartSlice, orderSlice)
+│   │   ├── pages/        <- Catalog, Product Detail, Cart, Checkout, Order, Auth & Admin views
+│   │   ├── App.jsx       <- React Router DOM routing & layouts
+│   │   └── main.jsx      <- Entry point
+│   ├── tailwind.config.js
+│   └── vite.config.js    <- Configured with proxy for /api -> http://localhost:5000
 └── backend/              <- Node.js & Express REST API
-    ├── .env              <- Environment configuration variables
+    ├── .env.example      <- Environment variable template
     ├── index.js          <- Express application entry point
-    ├── config/           <- Database and third-party API configurations
-    ├── controllers/      <- Request handlers
-    ├── middleware/       <- Express custom middlewares (auth, admin, etc.)
-    ├── model/            <- Mongoose database schemas
+    ├── config/           <- Database and Cloudinary configurations
+    ├── controllers/      <- Request handlers (auth, product, cart, order, payment, analytics)
+    ├── middleware/       <- Express custom middlewares (protect, admin)
+    ├── model/            <- Mongoose database schemas (User, Product, Cart, Order, Review)
     ├── routes/           <- REST API route definitions
-    └── utils/            <- Supporting helper utilities (token generation, nodemailer)
+    └── utils/            <- Token generation, Nodemailer, Cloudinary streams
 ```
-
----
-
-## 🛠️ Configuration & Environment Variables
-
-The backend is configured to use several third-party integrations (Nodemailer, Cloudinary, MongoDB, and JWT secrets) via the environment file [backend/.env](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/.env).
-
-Key configurations currently defined:
-- **`PORT`**: 5000 (port on which the server listens).
-- **`MONGO_URI`**: Local MongoDB connection string (`mongodb://localhost:27017/`).
-- **`EMAIL_USER` & `EMAIL_PASS`**: Gmail address and App Password used by Nodemailer.
-- **`JWT_ACCESS_SECRET` & `JWT_REFRESH_SECRET`**: Secrets used to sign access and refresh tokens.
-- **`CLOUDINARY_*`**: Credentials for cloud media storage.
 
 ---
 
@@ -46,54 +43,49 @@ Key configurations currently defined:
 The authentication system implemented in the backend relies on double token validation (Access Token in cookies/headers + Refresh Token in cookies) with secure hashing stored in the database.
 
 1. **Registration**: 
-   - User posts to `registerUser` in [authController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/authController.js#L33).
-   - A random 6-digit verification OTP is generated and emailed to the user via [sendMail.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/utils/sendMail.js#L15).
-   - User state is set to `verified: false`.
+   - User posts to `registerUser` in `backend/controllers/authController.js`.
+   - A random 6-digit verification OTP is generated and emailed to the user.
 2. **OTP Verification**:
-   - User submits the OTP to `verifyOtp` in [authController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/authController.js#L77).
-   - Upon verification, the user's status becomes `verified: true`, and access/refresh tokens are generated via `generateAccessToken` & `generateRefreshToken` inside [tokenUtils.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/utils/tokenUtils.js).
-   - SHA-256 hashes of the access and refresh tokens (`accessTokenHash`, `refreshTokenHash`) are saved in the user's document using `hashToken` ([tokenUtils.js:L23](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/utils/tokenUtils.js#L23)).
-   - Tokens are set as HTTP-only cookies: `accessToken` (15-minute lifespan) and `refreshToken` (7-day lifespan).
+   - User submits the OTP to `verifyOtp`.
+   - Access & refresh tokens are generated and stored as HTTP-only cookies (`accessToken` & `refreshToken`).
+   - The user record is updated to `verified: true`.
 3. **Session Verification (Middleware)**:
-   - Protected routes use `protect` in [authMiddleware.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/middleware/authMiddleware.js#L7).
-   - The middleware verifies the JWT signature and then queries the database to ensure the token hash matching the incoming token is still active on the user model (`accessTokenHash`).
+   - Protected routes use `protect` in `backend/middleware/authMiddleware.js`.
+   - The middleware verifies the JWT signature and then queries the database to ensure the token hash matching the incoming token is active.
 4. **Token Refresh**:
-   - The route `/api/token/refresh` matches `refreshToken` in [tokenController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/tokenController.js#L9).
-   - The valid refresh token cookie/body is hashed and matched with the stored `refreshTokenHash` to issue a new access token.
+   - The route `/api/token/refresh` matches `refreshToken` in `backend/controllers/tokenController.js` and issues a fresh access token cookie.
+   - The frontend Axios interceptor automatically calls this endpoint when receiving a `401 Unauthorized`.
 
 ---
 
-## 🚨 Critical Bugs & Discrepancies
+## 💻 Frontend Architecture
 
-### Resolved Issues
-- [x] **SyntaxError in `orders.js` Model (CJS vs. ESM)**: Converted ES Module syntax to CommonJS in [orders.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/model/orders.js).
-- [x] **Missing Routes and Controllers**: Created placeholder files for `user`, `product`, and `cart` routes and controllers so the server registers them without throwing `Cannot find module` error.
-- [x] **Order Controller Implementation**: Implemented `createOrder` inside [orderController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/orderController.js) and resolved reference errors in [orderRoutes.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/routes/orderRoutes.js).
-- [x] **Security Vulnerability in Order Creation**: Secured the `/create-order` endpoint in [orderRoutes.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/routes/orderRoutes.js) with the `protect` middleware, and changed [orderController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/orderController.js) to retrieve the `userId` directly from `req.user._id` (and user's email via `req.user.email` for nodemailer confirmation) rather than trusting client-provided input.
-- [x] **Case-Sensitive Mongoose References**: Updated references from lowercased to capitalized `'User'` and `'Product'` in [orders.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/model/orders.js) to align with correct case-sensitive model registry naming conventions.
-- [x] **Error Handling for validation and casting**: Upgraded error handling in [orderController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/orderController.js) to intercept Mongoose validation and cast errors, returning `400 Bad Request` with appropriate messages instead of throwing generic `500` server errors.
-- [x] **User Controller Implementation**: Fully implemented [userController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/userController.js) including secure profile fetching and profile updating (handles password hashing and email uniqueness validation).
-- [x] **Admin Middleware Logical Bug**: Corrected [adminMiddleware.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/middleware/adminMiddleware.js) to check `req.user.role === 'admin'` instead of `req.user.isAdmin` (since there was no `isAdmin` property on the user model).
-- [x] **Product Model & Controller**: Created the Mongoose schema [product.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/model/product.js) and implemented full CRUD logic inside [productController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/productController.js) (secured using auth and admin middlewares).
-- [x] **Cart Model & Controller**: Created the Mongoose schema [cart.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/model/cart.js) and implemented full cart management endpoints in [cartController.js](file:///C:/Users/Chirag/Desktop/New%20folder/shopnest-self/backend/controllers/cartController.js) (including inventory limits validation and product details population).
-
-### Active Issues / Bugs
-*No critical bugs active in the current backend scaffolding. The server is runnable and fully functional.*
+- **State Management**:
+  - `authSlice`: Handles login, register, verify-otp, forgot-password, reset-password, logout, profile update.
+  - `productSlice`: Handles fetching catalog with query params (keyword, category, min/max price, sorting, pagination), single product lookup, and admin CRUD actions.
+  - `cartSlice`: Manages shopping cart state, synchronizes with `/api/cart` when logged in, and persists to `localStorage` for guests.
+  - `orderSlice`: Handles order placement (`/api/orders`), order history (`/api/orders/myorders`), order tracking, admin status updates, and Razorpay payment initialization & signature verification.
+- **Routing**:
+  - Protected routes are guarded by `<ProtectedRoute>` which checks user session.
+  - Admin routes (`/admin`, `/admin/products`, `/admin/orders`) verify `user.role === 'admin'`.
 
 ---
 
-## 📈 Next Steps & Development Roadmap
+## 🚀 Running the Project
 
-When you are ready to continue building:
+1. **Backend**:
+   ```bash
+   cd backend
+   npm install
+   cp .env.example .env
+   node seed.js # (Optional) Seeds admin & demo products
+   npm run dev
+   ```
 
-1. **Implement Missing Core Models**:
-   - All backend core models (User, Product, Cart, Order) are now fully implemented and connected.
-
-
-3. **Scaffold the Frontend**:
-   - Initialize a React + Tailwind application inside `/frontend` using Vite:
-     ```bash
-     npx -y create-vite@latest frontend --template react
-     ```
-   - Set up Redux Toolkit for global shopping cart and auth state.
-   - Configure a proxy in Vite config to forward `/api` calls to `http://localhost:5000`.
+2. **Frontend**:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   Visit `http://localhost:5173` in your browser. All `/api` requests will proxy smoothly to the backend on `http://localhost:5000`.
